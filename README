@@ -1,0 +1,3 @@
+A tiny tool written in golang that encodes and decodes strings into base64 optionally with multiple iterations.
+
+Warning: Don't go over 80 unless you have a supercomputer :)
