@@ -1,5 +1,4 @@
-module alessio/b64
-
+module github.com/tomadojuice/b64
 go 1.17
 
 require github.com/urfave/cli/v2 v2.4.0
