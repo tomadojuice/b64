@@ -5,18 +5,24 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
+
+	clipboard "golang.design/x/clipboard"
 
 	"github.com/urfave/cli/v2"
 )
 
-func encode(s string, iterations int) string {
+func encode(s string, iterations int, doCopy bool) string {
 	for i := 0; i < iterations; i++ {
 		s = base64.StdEncoding.EncodeToString([]byte(s))
+	}
+	if doCopy {
+		copy(s)
 	}
 	return s
 }
 
-func decode(s string, iterations int) string {
+func decode(s string, iterations int, doCopy bool) string {
 	for i := 0; i < iterations; i++ {
 		b, err := base64.StdEncoding.DecodeString(s)
 		if err != nil {
@@ -24,7 +30,17 @@ func decode(s string, iterations int) string {
 		}
 		s = string(b)
 	}
+	if doCopy {
+		copy(s)
+	}
 	return s
+}
+
+func copy(s string) {
+	clipboard.Write(clipboard.FmtText, []byte(s))
+
+	// this delay is needed for Linux clipboard managers to properly pick up the new clipboard contents HACKY I KNOW
+	time.Sleep(time.Millisecond * 20)
 }
 func main() {
 	app := &cli.App{
@@ -45,9 +61,14 @@ func main() {
 						Usage:   "Number of iterations",
 						Value:   1,
 					},
+					&cli.BoolFlag{
+						Name:    "copy",
+						Aliases: []string{"c"},
+						Usage:   "Copy to clipboard",
+					},
 				},
 				Action: func(c *cli.Context) error {
-					fmt.Println(encode(c.Args().First(), c.Int("iterations")))
+					fmt.Println(encode(c.Args().First(), c.Int("iterations"), c.Bool("copy")))
 					return nil
 				},
 			},
@@ -64,15 +85,23 @@ func main() {
 						Usage:   "Number of iterations",
 						Value:   1,
 					},
+					&cli.BoolFlag{
+						Name:    "copy",
+						Aliases: []string{"c"},
+						Usage:   "Copy to clipboard",
+					},
 				},
 				Action: func(c *cli.Context) error {
-					fmt.Println(decode(c.Args().First(), c.Int("iterations")))
+					fmt.Println(decode(c.Args().First(), c.Int("iterations"), c.Bool("copy")))
 					return nil
 				},
 			},
 		},
 	}
-
+	errClip := clipboard.Init()
+	if errClip != nil {
+		panic(errClip)
+	}
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
